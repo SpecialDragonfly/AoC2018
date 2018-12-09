@@ -56,25 +56,18 @@ public:
         ss << "(" << m_x << ", " << m_y << ")";
         return ss.str();   
     }
-    bool getClosestTo(vector<Point> points, Point &p) {
-        int minDistance = 999999999;
+    bool distanceSum(vector<Point> points) {
+        int max = 10000;
+        int currentCount = 0;
         for (int i = 0; i < points.size(); i++) {
-            Point &point = points.at(i);
-            
-            int distance = point.distanceFrom(m_x, m_y);
-            if (distance < minDistance) {
-                minDistance = distance;
-                p = point;
+            int dist = points.at(i).distanceFrom(m_x, m_y);
+            if (currentCount + dist >= max) {
+                return false;
             }
+            currentCount += dist;
         }
-        int minCount = 0;
-        for (int i = 0; i < points.size(); i++) {
-            if (points.at(i).distanceFrom(m_x, m_y) == minDistance) {
-                minCount++;
-            } 
-        }
-        
-        return minCount == 1;
+        //cout << "Valid point " << toString() << " dist: " << currentCount << "\n";
+        return true;
     }
 };
 
@@ -112,36 +105,16 @@ public:
         // if you don't get any equal ones add it to the list (I think you're using a vector)
         // for the closest test point
         
-        map<string, int> territories;
-        for (int i = 0; i < m_points.size(); i++) {
-            territories.insert({m_points.at(i).coords(), 0});
-        }
+        int regionCount = 0;
         for (int i = left; i <= right; i++) {
             for (int j = top; j <= bottom; j++) {
                 Coord c = Coord(i, j);
-                Point p = Point();
-                bool found = c.getClosestTo(m_points, p);
-                //cout << c.toString() << ": " << (found ? p.coords() : "no") << "\n";
-                if (found) {
-                    if (i == left || i == right || j == top || j == bottom) {
-                        cout << p.coords() << " marked as infinite\n";
-                        p.setAsInfinite();
-                    } else {
-                        territories.at(p.coords())++;
-                    }
+                if (c.distanceSum(m_points)) {
+                    regionCount++;
                 }
             }
         }
-        map<string, int>::iterator it;
-        for (it = territories.begin(); it != territories.end(); it++) {
-            cout << it->first << ": " << it->second << "\n";
-        }
-    }
-    
-    void output() {
-        for (int i = 0; i < m_points.size(); i++) {
-            m_points.at(i).output();
-        }
+        cout << "Region size: " << regionCount << "\n";
     }
 };
 
@@ -160,7 +133,6 @@ int main(int argc, char** argv) {
             space.addPoint(p);
         }
         space.calc();
-        space.output();
         
         myfile.close();
     }
