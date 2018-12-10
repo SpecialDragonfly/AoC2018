@@ -46,6 +46,25 @@ public:
     {
         return (m_id < node.getId());
     }
+    
+/*
+ main.cpp:118:76: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char>*, std::vector<std::__cxx11::basic_string<char> > >’ and ‘__gnu_cxx::__normal_iterator<Node*, std::vector<Node> >’)
+             last = std::unique(currentOptions.begin(), currentOptions.end());
+                                                                            ^
+*/    
+    Node& operator = (const Node& node) {
+        m_id = node.m_id;
+        m_next.clear();
+        m_previous.clear();
+        for (int i = 0; i < node.m_next.size(); i++) {
+            m_next.push_back(node.m_next.at(i));
+        }
+        for (int i = 0; i < node.m_previous.size(); i++) {
+            m_previous.push_back(node.m_previous.at(i));
+        }
+        
+        return *this;
+    }
 };
 
 int main(int argc, char** argv) {  
