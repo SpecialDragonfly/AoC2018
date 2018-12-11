@@ -62,6 +62,13 @@ public:
     }
 };
 
+void outputNodeVector(vector<Node> vec) {
+    for (int i = 0; i < vec.size(); i++) {
+        cout << vec.at(i).getId();
+    }
+    cout << "\n";
+}
+
 int main(int argc, char** argv) {  
     ifstream myfile ("data2");
     
@@ -127,6 +134,8 @@ int main(int argc, char** argv) {
         vector<Node> newOptions;
         // For each node essentially.
         for (int count = 0; count < nodes.size(); count++) {
+            cout << "Before sorting\n";
+            outputNodeVector(currentOptions);
             // Sort our current options (because alphabetical order)
             std::sort(currentOptions.begin(), currentOptions.end());
             
@@ -143,10 +152,7 @@ int main(int argc, char** argv) {
             // Remove it from the list
             currentOptions.erase(currentOptions.begin());
             cout << "After erasing: \n";
-            for (int i = 0; i < currentOptions.size(); i++) {
-                cout << currentOptions.at(i).getId();
-            }
-            cout << "\n";
+            outputNodeVector(currentOptions);
             
             // What are the options from that node?
             newOptions = nodes[nextElement.getId()].options();
@@ -155,10 +161,7 @@ int main(int argc, char** argv) {
                 currentOptions.push_back(newOptions.at(i));
             }
             cout << "New list: \n";
-            for (int i = 0; i < currentOptions.size(); i++) {
-                cout << currentOptions.at(i).getId();
-            }
-            cout << "\n";            
+            outputNodeVector(currentOptions);
         }
         
         myfile.close();
