@@ -13,8 +13,8 @@ using namespace std;
 class Node {
 public:
     string m_id;
-    vector<string> m_next;
-    vector<string> m_previous;
+    vector<Node> m_next;
+    vector<Node> m_previous;
     bool m_handled;
     Node(){};
     Node(string id) {
@@ -23,13 +23,13 @@ public:
     string getId() const {
         return m_id;
     }
-    void addNext(string next) {
+    void addNext(Node &next) {
         m_next.push_back(next);
     }
-    void addPrerequisite(string previous) {
+    void addPrerequisite(Node &previous) {
         m_previous.push_back(previous);
     }
-    vector<string> options() {
+    vector<Node> options() {
         return m_next;
     }
     void setHandled() {
@@ -45,13 +45,8 @@ public:
     bool operator == (const Node& node) const
     {
         return (m_id < node.getId());
-    }
-    
-/*
- main.cpp:118:76: error: no match for ‘operator=’ (operand types are ‘__gnu_cxx::__normal_iterator<std::__cxx11::basic_string<char>*, std::vector<std::__cxx11::basic_string<char> > >’ and ‘__gnu_cxx::__normal_iterator<Node*, std::vector<Node> >’)
-             last = std::unique(currentOptions.begin(), currentOptions.end());
-                                                                            ^
-*/    
+    }    
+
     Node& operator = (const Node& node) {
         m_id = node.m_id;
         m_next.clear();
@@ -74,69 +69,96 @@ int main(int argc, char** argv) {
         string line;
         
         vector<string> ids;
-        vector<string> next;
+        vector<string> nextIds;
         map<string, Node> nodes;
         while (getline(myfile, line)) {
             // pieces[1] before pieces[2]
             regex pieces_regex(".*?Step ([A-Za-z]+) .*?step ([A-Za-z]+) .*$");
             smatch pieces_match;
             if (std::regex_match(line, pieces_match, pieces_regex)) {
-                ids.push_back(pieces_match[1]);
-                next.push_back(pieces_match[2]);
-                if (nodes.find(pieces_match[1]) == nodes.end()) {
-                    Node node = Node(pieces_match[1]);
-                    node.addNext(pieces_match[2]);
-                    nodes.insert({pieces_match[1], node});
-                } else {
-                    nodes.at(pieces_match[1]).addNext(pieces_match[2]);
+                auto id = pieces_match[1];
+                auto next = pieces_match[2];
+                
+                ids.push_back(id);
+                nextIds.push_back(next);
+                
+                Node currentNode;
+                Node nextNode;
+                
+                // Get the id node
+                if (nodes.find(id) == nodes.end()) {
+                    currentNode = Node(id);
+                    nodes.insert({id, currentNode});
                 }
-                if (nodes.find(pieces_match[2]) == nodes.end()) {
-                    Node node = Node(pieces_match[2]);
-                    node.addPrerequisite(pieces_match[1]);
-                    nodes.insert({pieces_match[2], node});
-                } else {
-                    nodes.at(pieces_match[2]).addPrerequisite(pieces_match[1]);
+                
+                // Get the 'next' node
+                if (nodes.find(next) == nodes.end()) {
+                    nextNode = Node(next);
+                    nodes.insert({next, nextNode});
                 }
+                
+                nodes.at(id).addNext(nextNode);
+                nodes.at(next).addPrerequisite(currentNode);                
             }
         }
         
+        // Get the starting node
+        // The node that exists in the list of ids that doesn't exist in the
+        // list of 'nextIds' is our first Node.
         std::vector<string> v(ids.size());
         std::vector<string>::iterator it;
         
         auto last = std::unique(ids.begin(), ids.end());
         ids.erase(last, ids.end());
         
-        last = std::unique(next.begin(), next.end());
-        next.erase(last, next.end());
+        last = std::unique(nextIds.begin(), nextIds.end());
+        nextIds.erase(last, nextIds.end());
         
         std::sort(ids.begin(), ids.end());
-        std::sort(next.begin(), next.end());
-        it=std::set_difference (ids.begin(), ids.end(), next.begin(), next.end(), v.begin());
+        std::sort(nextIds.begin(), nextIds.end());
+        it=std::set_difference (ids.begin(), ids.end(), nextIds.begin(), nextIds.end(), v.begin());
         
+        // Get that first node.
         Node firstElement = nodes[v.at(0)];
         
         vector<Node> currentOptions;
         currentOptions.push_back(firstElement);
 
         vector<Node> newOptions;
+        // For each node essentially.
         for (int count = 0; count < nodes.size(); count++) {
+            // Sort our current options (because alphabetical order)
             std::sort(currentOptions.begin(), currentOptions.end());
-            last = std::unique(currentOptions.begin(), currentOptions.end());
-            //currentOptions.erase(last, currentOptions.end());               
             
+            // We only want the unique options
+            auto tmpIt = std::unique(currentOptions.begin(), currentOptions.end());
+            currentOptions.erase(tmpIt, currentOptions.end());
             
-//            string nextElement = currentOptions.at(0);
-//            cout << "Next: " << nextElement << "\n";
-//            currentOptions.erase(currentOptions.begin());
-//            cout << "After erasing: \n";
-//            for (int i = 0; i < currentOptions.size(); i++) {
-//                cout << currentOptions.at(i);
-//            }
-//            cout << "\n";
-//            newOptions = nodes[nextElement].options();
-//            for (int i = 0; i < newOptions.size(); i++) {
-//                currentOptions.push_back(newOptions.at(i));
-//            }
+            // Get the first one in the list
+            Node nextElement = currentOptions.at(0);
+            
+            // What is it?
+            cout << "Next: " << nextElement.getId() << "\n";
+            
+            // Remove it from the list
+            currentOptions.erase(currentOptions.begin());
+            cout << "After erasing: \n";
+            for (int i = 0; i < currentOptions.size(); i++) {
+                cout << currentOptions.at(i).getId();
+            }
+            cout << "\n";
+            
+            // What are the options from that node?
+            newOptions = nodes[nextElement.getId()].options();
+            for (int i = 0; i < newOptions.size(); i++) {
+                cout << "Adding " << newOptions.at(i).getId() << " to the list\n";
+                currentOptions.push_back(newOptions.at(i));
+            }
+            cout << "New list: \n";
+            for (int i = 0; i < currentOptions.size(); i++) {
+                cout << currentOptions.at(i).getId();
+            }
+            cout << "\n";            
         }
         
         myfile.close();
